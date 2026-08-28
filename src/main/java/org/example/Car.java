@@ -10,6 +10,10 @@ public class Car {
     public float speed = 0;
     public String spriteName;
 
+    // Control de vueltas[cite: 3]
+    public int lap = 1;
+    public boolean checkpointPassed = false;
+
     public static final float MAX_SPEED = 200f;
     public static final float ACCELERATION = 50f;
     public static final float ROTATION_SPEED = 90f;
@@ -53,7 +57,7 @@ public class Car {
                 originX, originY,
                 texture.getWidth(), texture.getHeight(),
                 0.5f, 0.5f,             // Escala en X e Y
-                angle,              // Ángulo en grados
+                angle,                  // Ángulo en grados
                 0, 0,
                 texture.getWidth(), texture.getHeight(),
                 false, false
