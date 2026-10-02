@@ -48,6 +48,7 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
     private Texture blancoTexture;
 
     private Texture pistaTexture;
+    private Pixmap pistaPixmap;
     private Car autoLocal;
     private HiloCliente clienteRed;
     private int miId = -1;
@@ -84,6 +85,7 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         pixmap.dispose();
 
         pistaTexture = new Texture(Gdx.files.internal("pista.png"));
+        pistaPixmap = new Pixmap(Gdx.files.internal("pista.png"));
 
         for (String sprite : SPRITES_DISPONIBLES) {
             texturas.put(sprite, new Texture(Gdx.files.internal(sprite)));
@@ -142,6 +144,23 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             rival.spriteName = spriteRival;
             rival.lap = lapRival;
         }
+    }
+
+    private boolean esAsfalto(float x, float y) {
+        int pixelX = (int) (x * pistaPixmap.getWidth() / 800f);
+        int pixelY = (int) ((600f - y) * pistaPixmap.getHeight() / 600f);
+
+        if (pixelX < 0 || pixelX >= pistaPixmap.getWidth() || pixelY < 0 || pixelY >= pistaPixmap.getHeight()) {
+            return true;
+        }
+
+        int val = pistaPixmap.getPixel(pixelX, pixelY);
+
+        float r = ((val >> 24) & 0xFF) / 255f;
+        float g = ((val >> 16) & 0xFF) / 255f;
+        float b = ((val >> 8) & 0xFF) / 255f;
+
+        return (g < r + 0.1f) && (g < b + 0.1f);
     }
 
     private void reiniciarAutoLocal() {
@@ -240,7 +259,9 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             boolean left = Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A);
             boolean right = Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D);
 
-            autoLocal.update(delta, up, down, left, right);
+            boolean enPasto = !esAsfalto(autoLocal.x, autoLocal.y);
+
+            autoLocal.update(delta, up, down, left, right, enPasto);
 
             Rectangle autoBox = new Rectangle(autoLocal.x - 12, autoLocal.y - 12, 24, 24);
 
@@ -361,6 +382,7 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
     public void dispose() {
         batch.dispose();
         if (pistaTexture != null) pistaTexture.dispose();
+        if (pistaPixmap != null) pistaPixmap.dispose();
         if (blancoTexture != null) blancoTexture.dispose();
         if (font != null) font.dispose();
         for (Texture t : texturas.values()) {

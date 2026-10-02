@@ -27,13 +27,20 @@ public class Car {
         this.spriteName = spriteName;
     }
 
-    public void update(float delta, boolean up, boolean down, boolean left, boolean right) {
+    public void update(float delta, boolean up, boolean down, boolean left, boolean right, boolean enPasto) {
+        float maxVelActual = enPasto ? MAX_SPEED * 0.3f : MAX_SPEED;
+        float aceleracionActual = enPasto ? ACCELERATION * 0.3f : ACCELERATION;
+
         if (up) {
             speed = Math.min(MAX_SPEED, speed + ACCELERATION * delta);
         } else if (down) {
             speed = Math.max(-MAX_SPEED / 2, speed - ACCELERATION * delta);
         } else {
             speed *= 0.98f;
+        }
+
+        if (enPasto && Math.abs(speed) > maxVelActual) {
+            speed *= 0.92f;
         }
 
         if (Math.abs(speed) > 10) {
