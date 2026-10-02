@@ -44,7 +44,6 @@ public class HiloCliente extends Thread {
         Gdx.app.postRunnable(() -> {
             if (listener == null) return;
 
-            // 1. Recepción de confirmación del servidor ("Buenas$1")[cite: 4]
             if (msg.startsWith("Buenas$")) {
                 String[] partes = msg.split("\\$");
                 if (partes.length > 1) {
@@ -52,13 +51,11 @@ public class HiloCliente extends Thread {
                     listener.onJugadorConectado(idAsignado);
                 }
             }
-            // 2. Recepción de datos de oponentes ("POS:ID:x:y:angulo:sprite:lap")[cite: 4]
             else if (msg.startsWith("POS:")) {
                 String[] partes = msg.substring(4).split(":");
                 if (partes.length >= 5) {
                     int idJugador = Integer.parseInt(partes[0]);
 
-                    // Reconstruir la cadena con x:y:angulo:sprite:lap
                     StringBuilder datosVehiculo = new StringBuilder();
                     for (int i = 1; i < partes.length; i++) {
                         datosVehiculo.append(partes[i]);

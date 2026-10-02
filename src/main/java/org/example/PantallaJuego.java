@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PantallaJuego extends ApplicationAdapter implements NetworkListener {
 
-    // Estados del Juego
     public enum EstadoJuego {
         MENU,
         OPCIONES,
@@ -37,13 +36,16 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
     private static final int TOTAL_VUELTAS = 3;
 
     private Rectangle metaBox;
-    private Rectangle checkpointBox;
+    private Rectangle checkpointBox1;
+    private Rectangle checkpointBox2;
+    private Rectangle checkpointBox3;
+
 
     private SpriteBatch batch;
     private OrthographicCamera camera;
     private FitViewport viewport;
     private BitmapFont font;
-    private Texture blancoTexture; // Textura para dibujar fondos de botones
+    private Texture blancoTexture;
 
     private Texture pistaTexture;
     private Car autoLocal;
@@ -58,7 +60,6 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
     private final Map<String, Texture> texturas = new HashMap<>();
     private final Map<Integer, Car> oponentes = new ConcurrentHashMap<>();
 
-    // Rectángulos de botones
     private Rectangle btnJugar;
     private Rectangle btnOpciones;
     private Rectangle btnSalirMenu;
@@ -76,7 +77,6 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
 
         font = new BitmapFont();
 
-        // Crear textura de 1x1 píxel blanco para los rectángulos de los botones
         Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.WHITE);
         pixmap.fill();
@@ -89,11 +89,12 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             texturas.put(sprite, new Texture(Gdx.files.internal(sprite)));
         }
 
-        // Definir zonas
         metaBox = new Rectangle(SALIDA_X - 48, SALIDA_Y - 25, 20, 127);
-        checkpointBox = new Rectangle(512, 94, 20, 127);
+        checkpointBox1 = new Rectangle(44, 291, 86, 20);
+        checkpointBox2 = new Rectangle(512, 94, 20, 127);
+        checkpointBox3 = new Rectangle(667, 291, 86, 20);
 
-        // Inicializar posiciones de botones (X, Y, Ancho, Alto)
+
         btnJugar = new Rectangle(300, 330, 200, 45);
         btnOpciones = new Rectangle(300, 260, 200, 45);
         btnSalirMenu = new Rectangle(300, 190, 200, 45);
@@ -103,11 +104,9 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         btnReiniciar = new Rectangle(250, 280, 300, 45);
         btnSalirGameOver = new Rectangle(250, 210, 300, 45);
 
-        // Auto local
         autoLocal = new Car(SALIDA_X, SALIDA_Y, SPRITES_DISPONIBLES[0]);
         autoLocal.angle = ANGULO_INICIAL;
 
-        // Red
         clienteRed = new HiloCliente(this);
         clienteRed.start();
     }
@@ -153,7 +152,9 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             autoLocal.angle = ANGULO_INICIAL;
             autoLocal.speed = 0;
             autoLocal.lap = 1;
-            autoLocal.checkpointPassed = false;
+            autoLocal.checkpointPassed1 = false;
+            autoLocal.checkpointPassed2 = false;
+            autoLocal.checkpointPassed3 = false;
         }
     }
 
@@ -161,12 +162,10 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
     public void render() {
         float delta = Gdx.graphics.getDeltaTime();
 
-        // Tecla F11 para Pantalla Completa en cualquier momento
         if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
             togglePantallaCompleta();
         }
 
-        // Obtener coordenadas del mouse dentro del juego
         Vector3 mouse = camera.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
         boolean click = Gdx.input.isButtonJustPressed(Input.Buttons.LEFT);
 
@@ -195,7 +194,6 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         batch.end();
     }
 
-    // --- MENÚ DE INICIO ---
     private void renderMenu(Vector3 mouse, boolean click) {
         font.getData().setScale(1.8f);
         font.setColor(Color.GOLD);
@@ -216,7 +214,6 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         }
     }
 
-    // --- MENÚ DE OPCIONES ---
     private void renderOpciones(Vector3 mouse, boolean click) {
         font.getData().setScale(1.6f);
         font.setColor(Color.WHITE);
@@ -230,7 +227,6 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         }
     }
 
-    // --- LÓGICA Y RENDER DEL JUEGO ---
     private void renderJuego(float delta) {
 
         if (Gdx.input.justTouched()) {
@@ -238,7 +234,6 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             System.out.println("SALIDA_X = " + mouse.x + "f;  SALIDA_Y = " + mouse.y + "f;");
         }
 
-        // Control e interacción del vehículo local
         if (autoLocal != null) {
             boolean up = Gdx.input.isKeyPressed(Input.Keys.UP) || Gdx.input.isKeyPressed(Input.Keys.W);
             boolean down = Gdx.input.isKeyPressed(Input.Keys.DOWN) || Gdx.input.isKeyPressed(Input.Keys.S);
@@ -247,24 +242,34 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
 
             autoLocal.update(delta, up, down, left, right);
 
-            // Detección de vueltas
             Rectangle autoBox = new Rectangle(autoLocal.x - 12, autoLocal.y - 12, 24, 24);
 
-            if (autoBox.overlaps(checkpointBox)) {
-                autoLocal.checkpointPassed = true;
+            if (autoBox.overlaps(checkpointBox1)) {
+                autoLocal.checkpointPassed1 = true;
+            }
+            if (autoBox.overlaps(checkpointBox2)) {
+                autoLocal.checkpointPassed2 = true;
+            }
+            if (autoBox.overlaps(checkpointBox3)) {
+                autoLocal.checkpointPassed3 = true;
             }
 
-            if (autoLocal.checkpointPassed && autoBox.overlaps(metaBox)) {
+            if (autoLocal.checkpointPassed1 && autoLocal.checkpointPassed2 && autoLocal.checkpointPassed3 && autoBox.overlaps(metaBox)) {
                 if (autoLocal.lap < TOTAL_VUELTAS) {
                     autoLocal.lap++;
-                    autoLocal.checkpointPassed = false;
+                    autoLocal.checkpointPassed1 = false;
+                    autoLocal.checkpointPassed2 = false;
+                    autoLocal.checkpointPassed3 = false;
+
                 } else {
-                    // Completó todas las vueltas
                     estadoActual = EstadoJuego.GAME_OVER;
                 }
+            }else if ((autoLocal.checkpointPassed1 && autoBox.overlaps(metaBox)) || (autoLocal.checkpointPassed2 && autoBox.overlaps(metaBox)) || (autoLocal.checkpointPassed3 && autoBox.overlaps(metaBox))) {
+                autoLocal.checkpointPassed1 = false;
+                autoLocal.checkpointPassed2 = false;
+                autoLocal.checkpointPassed3 = false;
             }
 
-            // Enviar posición por red
             if (clienteRed != null && miId != -1) {
                 clienteRed.enviarMensaje(String.format("POS:%d:%.2f:%.2f:%.2f:%s:%d",
                         miId, autoLocal.x, autoLocal.y, autoLocal.angle, autoLocal.spriteName, autoLocal.lap));
@@ -274,12 +279,9 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         dibujarEscenaCarrera();
     }
 
-    // --- PANTALLA DE FIN DE CARRERA (GAME OVER) ---
     private void renderGameOver(Vector3 mouse, boolean click) {
-        // Dibujar escena de fondo semi-transparente
         dibujarEscenaCarrera();
 
-        // Fondo oscuro para la ventana flotante de fin de carrera
         batch.setColor(0, 0, 0, 0.75f);
         batch.draw(blancoTexture, 180, 150, 440, 300);
         batch.setColor(Color.WHITE);
@@ -322,11 +324,9 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         }
     }
 
-    // --- DIBUJAR BOTONES CON DETECCIÓN DE MOUSE ---
     private boolean dibujaBoton(String texto, Rectangle rect, Color colorBase, Color colorTexto, Vector3 mouse, boolean click) {
         boolean hover = rect.contains(mouse.x, mouse.y);
 
-        // Cambiar color cuando el puntero pasa sobre el botón
         if (hover) {
             batch.setColor(colorBase.r + 0.2f, colorBase.g + 0.2f, colorBase.b + 0.2f, 1f);
         } else {

@@ -10,9 +10,11 @@ public class Car {
     public float speed = 0;
     public String spriteName;
 
-    // Control de vueltas[cite: 3]
     public int lap = 1;
-    public boolean checkpointPassed = false;
+    public boolean checkpointPassed1 = false;
+    public boolean checkpointPassed2 = false;
+    public boolean checkpointPassed3 = false;
+
 
     public static final float MAX_SPEED = 200f;
     public static final float ACCELERATION = 50f;
@@ -26,23 +28,20 @@ public class Car {
     }
 
     public void update(float delta, boolean up, boolean down, boolean left, boolean right) {
-        // Aceleración y marcha atrás
         if (up) {
             speed = Math.min(MAX_SPEED, speed + ACCELERATION * delta);
         } else if (down) {
             speed = Math.max(-MAX_SPEED / 2, speed - ACCELERATION * delta);
         } else {
-            speed *= 0.98f; // Fricción
+            speed *= 0.98f;
         }
 
-        // Giro (solo gira cuando el vehículo está en movimiento)
         if (Math.abs(speed) > 10) {
             float dir = speed > 0 ? 1 : -1;
             if (left) angle += ROTATION_SPEED * delta * dir;
             if (right) angle -= ROTATION_SPEED * delta * dir;
         }
 
-        // Avance según el ángulo de orientación
         x += MathUtils.cosDeg(angle) * speed * delta;
         y += MathUtils.sinDeg(angle) * speed * delta;
     }
@@ -56,8 +55,8 @@ public class Car {
                 x - originX, y - originY,
                 originX, originY,
                 texture.getWidth(), texture.getHeight(),
-                0.5f, 0.5f,             // Escala en X e Y
-                angle,                  // Ángulo en grados
+                0.5f, 0.5f,
+                angle,
                 0, 0,
                 texture.getWidth(), texture.getHeight(),
                 false, false
