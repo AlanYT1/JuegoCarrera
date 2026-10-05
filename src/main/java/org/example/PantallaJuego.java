@@ -16,6 +16,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -292,7 +293,7 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             }
 
             if (clienteRed != null && miId != -1) {
-                clienteRed.enviarMensaje(String.format("POS:%d:%.2f:%.2f:%.2f:%s:%d",
+                clienteRed.enviarMensaje(String.format(Locale.US, "POS:%d:%.2f:%.2f:%.2f:%s:%d",
                         miId, autoLocal.x, autoLocal.y, autoLocal.angle, autoLocal.spriteName, autoLocal.lap));
             }
         }
