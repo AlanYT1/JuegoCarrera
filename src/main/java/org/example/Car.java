@@ -17,7 +17,7 @@ public class Car {
     public boolean checkpointPassed2 = false;
     public boolean checkpointPassed3 = false;
 
-    Sound sound = Gdx.audio.newSound(Gdx.files.internal("C:\\Users\\admin\\IdeaProjects\\untitled\\src\\main\\resources\\f1.mp3"));
+    Sound sound = Gdx.audio.newSound(Gdx.files.internal("f1.mp3"));
 
     private long soundId = -1;
     private boolean isPlayingSound = false;

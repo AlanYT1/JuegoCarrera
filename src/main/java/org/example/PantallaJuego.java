@@ -4,6 +4,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -11,6 +12,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -47,6 +49,10 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
     private FitViewport viewport;
     private BitmapFont font;
     private Texture blancoTexture;
+
+    private com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> animacionFondo;
+    private float tiempoTranscurrido = 0f;
+    private Music musicaMenu;
 
     private Texture pistaTexture;
     private Pixmap pistaPixmap;
@@ -103,6 +109,28 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         btnSalirMenu = new Rectangle(300, 190, 200, 45);
 
         btnVolverOpciones = new Rectangle(300, 200, 200, 45);
+
+        int totalFrames = 296;
+        com.badlogic.gdx.utils.Array<TextureRegion> arrFrames = new com.badlogic.gdx.utils.Array<>();
+
+        for (int i = 1; i <= totalFrames; i++) {
+            String numeroFormateado = String.format("%03d", i);
+            String ruta = "El_fin_se_acerca_frames/frame_" + numeroFormateado + ".png";
+
+            Texture texturaFrame = new Texture(Gdx.files.internal(ruta));
+            arrFrames.add(new TextureRegion(texturaFrame));
+        }
+
+        float duracionTotalVideo = 11f;
+        float velocidadFrame = duracionTotalVideo / totalFrames;
+
+        animacionFondo = new com.badlogic.gdx.graphics.g2d.Animation<>(velocidadFrame, arrFrames);
+        animacionFondo.setPlayMode(com.badlogic.gdx.graphics.g2d.Animation.PlayMode.LOOP);
+        musicaMenu = Gdx.audio.newMusic(Gdx.files.internal("elfinseacerca.mp3"));
+
+        musicaMenu.setLooping(true);
+        musicaMenu.setVolume(5f);
+        musicaMenu.play();
 
         btnReiniciar = new Rectangle(250, 280, 300, 45);
         btnSalirGameOver = new Rectangle(250, 210, 300, 45);
@@ -215,6 +243,10 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
     }
 
     private void renderMenu(Vector3 mouse, boolean click) {
+        tiempoTranscurrido += Gdx.graphics.getDeltaTime();
+        TextureRegion frameActual = animacionFondo.getKeyFrame(tiempoTranscurrido, true);
+        batch.draw(frameActual, 0, 0, 800, 600);
+
         font.getData().setScale(1.8f);
         font.setColor(Color.GOLD);
         font.draw(batch, "JUEGO DE CARRERAS MULTIJUGADOR", 130, 480);
@@ -223,6 +255,10 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         if (dibujaBoton("JUGAR", btnJugar, Color.DARK_GRAY, Color.WHITE, mouse, click)) {
             reiniciarAutoLocal();
             estadoActual = EstadoJuego.JUGANDO;
+
+            if (musicaMenu.isPlaying()){
+                musicaMenu.stop();
+            }
         }
 
         if (dibujaBoton("OPCIONES", btnOpciones, Color.DARK_GRAY, Color.WHITE, mouse, click)) {
