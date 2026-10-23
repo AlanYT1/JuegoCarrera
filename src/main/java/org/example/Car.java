@@ -1,5 +1,7 @@
 package org.example;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
@@ -15,6 +17,13 @@ public class Car {
     public boolean checkpointPassed2 = false;
     public boolean checkpointPassed3 = false;
 
+    Sound sound = Gdx.audio.newSound(Gdx.files.internal("C:\\Users\\admin\\IdeaProjects\\untitled\\src\\main\\resources\\f1.mp3"));
+
+    private long soundId = -1;
+    private boolean isPlayingSound = false;
+
+    private long soundReverseId = -1;
+    private boolean isPlayingReverse = false;
 
     public static final float MAX_SPEED = 200f;
     public static final float ACCELERATION = 50f;
@@ -33,9 +42,37 @@ public class Car {
 
         if (up) {
             speed = Math.min(MAX_SPEED, speed + ACCELERATION * delta);
-        } else if (down) {
-            speed = Math.max(-MAX_SPEED / 2, speed - ACCELERATION * delta);
+
+            if (!isPlayingSound) {
+                soundId = sound.play(0.5f);
+                sound.setPitch(soundId, 0.67f);
+                sound.setLooping(soundId, true);
+                isPlayingSound = true;
+            }
         } else {
+            if (isPlayingSound) {
+                sound.stop(soundId);
+                isPlayingSound = false;
+            }
+        }
+
+        if (down) {
+            speed = Math.max(-maxVelActual / 2, speed - aceleracionActual * delta);
+
+            if (!isPlayingReverse) {
+                soundReverseId = sound.play(0.5f);
+                sound.setPitch(soundReverseId, 0.3f);
+                sound.setLooping(soundReverseId, true);
+                isPlayingReverse = true;
+            }
+        } else {
+            if (isPlayingReverse) {
+                sound.stop(soundReverseId);
+                isPlayingReverse = false;
+            }
+        }
+
+        if (!up && !down) {
             speed *= 0.98f;
         }
 
