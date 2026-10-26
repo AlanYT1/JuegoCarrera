@@ -65,6 +65,13 @@ public class HiloCliente extends Thread {
                     listener.onMovimientoRecibido(idJugador, datosVehiculo.toString());
                 }
             }
+            else if (msg.startsWith("VOTO_REINICIAR:")) {
+                String[] partes = msg.split(":");
+                if (partes.length >= 2) {
+                    int idJugador = Integer.parseInt(partes[1]);
+                    listener.onMovimientoRecibido(idJugador, "VOTO_REINICIAR");
+                }
+            }
         });
     }
 

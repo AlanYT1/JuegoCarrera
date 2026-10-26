@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 
 public class Car {
@@ -16,6 +17,7 @@ public class Car {
     public boolean checkpointPassed1 = false;
     public boolean checkpointPassed2 = false;
     public boolean checkpointPassed3 = false;
+    public boolean checkpointPassed4 = false;
 
     Sound sound = Gdx.audio.newSound(Gdx.files.internal("f1.mp3"));
 
@@ -91,19 +93,28 @@ public class Car {
     }
 
     public void render(SpriteBatch batch, Texture texture) {
-        float originX = texture.getWidth() / 2f;
-        float originY = texture.getHeight() / 2f;
+        float anchoCarro = 42f;
+        float altoCarro = 30f;
+
+        float origenX = anchoCarro / 2f;
+        float origenY = altoCarro / 2f;
+
+        float anguloCorregido = this.angle + 180f;
 
         batch.draw(
-                texture,
-                x - originX, y - originY,
-                originX, originY,
-                texture.getWidth(), texture.getHeight(),
-                0.5f, 0.5f,
-                angle,
-                0, 0,
-                texture.getWidth(), texture.getHeight(),
-                false, false
+                new TextureRegion(texture),
+                x - origenX, y - origenY,
+                origenX, origenY,
+                anchoCarro, altoCarro,
+                1.0f, 1.0f,
+                anguloCorregido
         );
+    }
+
+    public void detener() {
+        this.speed = 0;
+        if (sound != null) {
+            sound.stop();
+        }
     }
 }

@@ -52,18 +52,23 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
     private float tiempoVideo = 0f;
     private Music musicaVideo;
 
+    private boolean votandoReiniciar = false;
+    private boolean yoVoteReiniciar = false;
+    private int votosReinicioActuales = 0;
+    private int totalJugadoresConectados = 1;
+
     private EstadoJuego estadoActual = EstadoJuego.MENU;
 
-    private static final float SALIDA_X = 552f;
-    private static final float SALIDA_Y = 408f;
-    private static final float ANGULO_INICIAL = 180f;
+    private static final float SALIDA_X = 190f;
+    private static final float SALIDA_Y = 257f;
+    private static final float ANGULO_INICIAL = 270f;
     private static final int TOTAL_VUELTAS = 3;
 
     private Rectangle metaBox;
     private Rectangle checkpointBox1;
     private Rectangle checkpointBox2;
     private Rectangle checkpointBox3;
-
+    private Rectangle checkpointBox4;
 
     private SpriteBatch batch;
     private OrthographicCamera camera;
@@ -82,8 +87,8 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
     private int miId = -1;
 
     private final String[] SPRITES_DISPONIBLES = {
-            "BlackOut.png", "BlueStrip.png", "GreenStrip.png",
-            "PinkStrip.png", "RedStrip.png", "WhiteStrip.png"
+            "auto1.png", "auto2.png", "auto3.png",
+            "auto4.png"
     };
 
     private final Map<String, Texture> texturas = new HashMap<>();
@@ -112,18 +117,18 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         blancoTexture = new Texture(pixmap);
         pixmap.dispose();
 
-        pistaTexture = new Texture(Gdx.files.internal("pista.png"));
-        pistaPixmap = new Pixmap(Gdx.files.internal("pista.png"));
+        pistaTexture = new Texture(Gdx.files.internal("MAPA1.png"));
+        pistaPixmap = new Pixmap(Gdx.files.internal("MAPA1.png"));
 
         for (String sprite : SPRITES_DISPONIBLES) {
             texturas.put(sprite, new Texture(Gdx.files.internal(sprite)));
         }
 
-        metaBox = new Rectangle(SALIDA_X - 48, SALIDA_Y - 25, 20, 127);
-        checkpointBox1 = new Rectangle(44, 291, 86, 20);
-        checkpointBox2 = new Rectangle(512, 94, 20, 127);
-        checkpointBox3 = new Rectangle(667, 291, 86, 20);
-
+        metaBox = new Rectangle(120, 203, 81, 36);
+        checkpointBox1 = new Rectangle(233, 458, 19, 88);
+        checkpointBox2 = new Rectangle(377, 160, 13, 75);
+        checkpointBox3 = new Rectangle(606, 385, 21, 94);
+        checkpointBox4 = new Rectangle(374, 9, 21, 96);
 
         btnJugar = new Rectangle(300, 330, 200, 45);
         btnOpciones = new Rectangle(300, 260, 200, 45);
@@ -186,6 +191,15 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
 
     @Override
     public void onMovimientoRecibido(int idJugador, String datos) {
+
+        if (datos.startsWith("VOTO_REINICIAR")) {
+            votosReinicioActuales++;
+            if (votosReinicioActuales >= totalJugadoresConectados) {
+                ejecutarReiniciarGlobal();
+            }
+            return;
+        }
+
         String[] partes = datos.split(":");
         if (partes.length < 4) return;
 
@@ -207,6 +221,7 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             rival.spriteName = spriteRival;
             rival.lap = lapRival;
         }
+        totalJugadoresConectados = Math.max(totalJugadoresConectados, idJugador);
     }
 
     private boolean esAsfalto(float x, float y) {
@@ -229,7 +244,7 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
     private void reiniciarAutoLocal() {
         if (autoLocal != null) {
             int offsetId = (miId != -1) ? miId - 1 : 0;
-            autoLocal.x = SALIDA_X + (offsetId * 35f);
+            autoLocal.x = SALIDA_X - (offsetId * 50f);
             autoLocal.y = SALIDA_Y;
             autoLocal.angle = ANGULO_INICIAL;
             autoLocal.speed = 0;
@@ -237,7 +252,18 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             autoLocal.checkpointPassed1 = false;
             autoLocal.checkpointPassed2 = false;
             autoLocal.checkpointPassed3 = false;
+            autoLocal.checkpointPassed4 = false;
         }
+    }
+
+    private void ejecutarReiniciarGlobal() {
+        if (autoLocal != null) {
+            autoLocal.detener();
+        }
+        reiniciarAutoLocal();
+        estadoActual = EstadoJuego.JUGANDO;
+        yoVoteReiniciar = false;
+        votosReinicioActuales = 0;
     }
 
     @Override
@@ -303,7 +329,6 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         if (Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)) {
             int teclaPresionada = -1;
 
-            // Averiguamos cuál fue la tecla exacta que se presionó recién
             for (int i = 0; i < 256; i++) {
                 if (Gdx.input.isKeyJustPressed(i)) {
                     teclaPresionada = i;
@@ -312,7 +337,6 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             }
 
             if (teclaPresionada != -1) {
-                // Verificamos si la tecla presionada coincide con alguna de las opciones válidas para el paso actual
                 boolean esValida = false;
                 for (int teclaPermitida : pasosKonami[indiceKonami]) {
                     if (teclaPresionada == teclaPermitida) {
@@ -324,7 +348,6 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
                 if (esValida) {
                     indiceKonami++;
                     if (indiceKonami == pasosKonami.length) {
-                        // ¡Código completado con éxito! (Ya sea con flechas o WASD)
                         estadoActual = EstadoJuego.VIDEO_SECRETO;
                         tiempoVideo = 0f;
                         indiceKonami = 0;
@@ -333,7 +356,6 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
                         musicaVideo.play();
                     }
                 } else {
-                    // Si se equivoca, comprobamos si la tecla sirve para reiniciar el primer paso
                     boolean esPrimerPaso = false;
                     for (int teclaPermitida : pasosKonami[0]) {
                         if (teclaPresionada == teclaPermitida) {
@@ -414,8 +436,11 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             if (autoBox.overlaps(checkpointBox3)) {
                 autoLocal.checkpointPassed3 = true;
             }
+            if (autoBox.overlaps(checkpointBox4)) {
+                autoLocal.checkpointPassed4 = true;
+            }
 
-            if (autoLocal.checkpointPassed1 && autoLocal.checkpointPassed2 && autoLocal.checkpointPassed3 && autoBox.overlaps(metaBox)) {
+            if (autoLocal.checkpointPassed1 && autoLocal.checkpointPassed2 && autoLocal.checkpointPassed3 && autoLocal.checkpointPassed4 && autoBox.overlaps(metaBox)) {
                 if (autoLocal.lap < TOTAL_VUELTAS) {
                     autoLocal.lap++;
                     autoLocal.checkpointPassed1 = false;
@@ -423,12 +448,15 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
                     autoLocal.checkpointPassed3 = false;
 
                 } else {
+                    autoLocal.speed = 0;
+                    autoLocal.detener();
                     estadoActual = EstadoJuego.GAME_OVER;
                 }
-            }else if ((autoLocal.checkpointPassed1 && autoBox.overlaps(metaBox)) || (autoLocal.checkpointPassed2 && autoBox.overlaps(metaBox)) || (autoLocal.checkpointPassed3 && autoBox.overlaps(metaBox))) {
+            }else if ((autoLocal.checkpointPassed1 || autoLocal.checkpointPassed2 || autoLocal.checkpointPassed3 || autoLocal.checkpointPassed4) && autoBox.overlaps(metaBox)) {
                 autoLocal.checkpointPassed1 = false;
                 autoLocal.checkpointPassed2 = false;
                 autoLocal.checkpointPassed3 = false;
+                autoLocal.checkpointPassed4 = false;
             }
 
             if (clienteRed != null && miId != -1) {
@@ -453,11 +481,33 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         font.getData().setScale(1.0f);
 
         if (dibujaBoton("REINICIAR CARRERA", btnReiniciar, Color.GREEN, Color.WHITE, mouse, click)) {
+            if (!yoVoteReiniciar) {
+                yoVoteReiniciar = true;
+                votosReinicioActuales++;
+
+                if (clienteRed != null) {
+                    clienteRed.enviarMensaje("VOTO_REINICIAR:" + miId);
+                }
+            }
+
+            if (yoVoteReiniciar) {
+                font.setColor(Color.YELLOW);
+                font.draw(batch, "Esperando votos... (" + votosReinicioActuales + " / " + totalJugadoresConectados + ")", 250, 260);
+            }
+
             reiniciarAutoLocal();
             estadoActual = EstadoJuego.JUGANDO;
         }
 
         if (dibujaBoton("SALIR AL MENÚ", btnSalirGameOver, Color.FIREBRICK, Color.WHITE, mouse, click)) {
+            if (autoLocal != null) {
+                autoLocal.detener();
+            }
+            yoVoteReiniciar = false;
+            votosReinicioActuales = 0;
+            if (!musicaMenu.isPlaying()) {
+                musicaMenu.play();
+            }
             estadoActual = EstadoJuego.MENU;
         }
     }
@@ -527,6 +577,14 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         if (font != null) font.dispose();
         for (Texture t : texturas.values()) {
             t.dispose();
+        }
+        if (musicaVideo != null) {
+            musicaVideo.dispose();
+        }
+        if (animacionVideoSecreto != null) {
+            for (TextureRegion region : animacionVideoSecreto.getKeyFrames()) {
+                region.getTexture().dispose();
+            }
         }
     }
 }
