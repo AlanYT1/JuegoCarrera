@@ -10,11 +10,13 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
 import java.util.HashMap;
@@ -28,8 +30,27 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         MENU,
         OPCIONES,
         JUGANDO,
-        GAME_OVER
+        GAME_OVER,
+        VIDEO_SECRETO
     }
+
+    private final int[][] pasosKonami = {
+            {Input.Keys.UP, Input.Keys.W},
+            {Input.Keys.UP, Input.Keys.W},
+            {Input.Keys.DOWN, Input.Keys.S},
+            {Input.Keys.DOWN, Input.Keys.S},
+            {Input.Keys.LEFT, Input.Keys.A},
+            {Input.Keys.RIGHT, Input.Keys.D},
+            {Input.Keys.LEFT, Input.Keys.A},
+            {Input.Keys.RIGHT, Input.Keys.D},
+            {Input.Keys.B, Input.Keys.B},
+            {Input.Keys.A, Input.Keys.A}
+    };
+    private int indiceKonami = 0;
+
+    private Animation<TextureRegion> animacionVideoSecreto;
+    private float tiempoVideo = 0f;
+    private Music musicaVideo;
 
     private EstadoJuego estadoActual = EstadoJuego.MENU;
 
@@ -131,6 +152,19 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         musicaMenu.setLooping(true);
         musicaMenu.setVolume(5f);
         musicaMenu.play();
+
+        int totalFramesVideo = 462;
+        Array<TextureRegion> framesVideo = new Array<>();
+
+        for (int i = 1; i <= totalFramesVideo; i++) {
+            String num = String.format("%03d", i);
+            Texture tex = new Texture(Gdx.files.internal("mecha_mecha_frames/frame_" + num + ".png"));
+            framesVideo.add(new TextureRegion(tex));
+        }
+        animacionVideoSecreto = new Animation<>(11f / totalFramesVideo, framesVideo);
+        animacionVideoSecreto.setPlayMode(Animation.PlayMode.LOOP);
+
+        musicaVideo = Gdx.audio.newMusic(Gdx.files.internal("mechamecha.mp3"));
 
         btnReiniciar = new Rectangle(250, 280, 300, 45);
         btnSalirGameOver = new Rectangle(250, 210, 300, 45);
@@ -237,12 +271,81 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             case GAME_OVER:
                 renderGameOver(mouse, click);
                 break;
+            case VIDEO_SECRETO:
+                renderVideoSecreto(mouse, click);
+                break;
         }
 
         batch.end();
     }
 
+    private void renderVideoSecreto(Vector3 mouse, boolean click) {
+        tiempoVideo += Gdx.graphics.getDeltaTime();
+        TextureRegion frameVideo = animacionVideoSecreto.getKeyFrame(tiempoVideo, true);
+
+        batch.draw(frameVideo, 0, 0, 800, 600);
+
+        font.setColor(Color.WHITE);
+        font.draw(batch, "Presiona [ESC] para volver al Menú", 20, 570);
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            if (musicaVideo.isPlaying()) {
+                musicaVideo.stop();
+            }
+            if (!musicaMenu.isPlaying()) {
+                musicaMenu.play();
+            }
+            estadoActual = EstadoJuego.MENU;
+        }
+    }
+
     private void renderMenu(Vector3 mouse, boolean click) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ANY_KEY)) {
+            int teclaPresionada = -1;
+
+            // Averiguamos cuál fue la tecla exacta que se presionó recién
+            for (int i = 0; i < 256; i++) {
+                if (Gdx.input.isKeyJustPressed(i)) {
+                    teclaPresionada = i;
+                    break;
+                }
+            }
+
+            if (teclaPresionada != -1) {
+                // Verificamos si la tecla presionada coincide con alguna de las opciones válidas para el paso actual
+                boolean esValida = false;
+                for (int teclaPermitida : pasosKonami[indiceKonami]) {
+                    if (teclaPresionada == teclaPermitida) {
+                        esValida = true;
+                        break;
+                    }
+                }
+
+                if (esValida) {
+                    indiceKonami++;
+                    if (indiceKonami == pasosKonami.length) {
+                        // ¡Código completado con éxito! (Ya sea con flechas o WASD)
+                        estadoActual = EstadoJuego.VIDEO_SECRETO;
+                        tiempoVideo = 0f;
+                        indiceKonami = 0;
+
+                        if (musicaMenu.isPlaying()) musicaMenu.pause();
+                        musicaVideo.play();
+                    }
+                } else {
+                    // Si se equivoca, comprobamos si la tecla sirve para reiniciar el primer paso
+                    boolean esPrimerPaso = false;
+                    for (int teclaPermitida : pasosKonami[0]) {
+                        if (teclaPresionada == teclaPermitida) {
+                            esPrimerPaso = true;
+                            break;
+                        }
+                    }
+                    indiceKonami = esPrimerPaso ? 1 : 0;
+                }
+            }
+        }
+
         tiempoTranscurrido += Gdx.graphics.getDeltaTime();
         TextureRegion frameActual = animacionFondo.getKeyFrame(tiempoTranscurrido, true);
         batch.draw(frameActual, 0, 0, 800, 600);
