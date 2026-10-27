@@ -79,6 +79,7 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
     private com.badlogic.gdx.graphics.g2d.Animation<TextureRegion> animacionFondo;
     private float tiempoTranscurrido = 0f;
     private Music musicaMenu;
+    private Music musicaJuego;
 
     private Texture pistaTexture;
     private Pixmap pistaPixmap;
@@ -157,6 +158,9 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         musicaMenu.setLooping(true);
         musicaMenu.setVolume(5f);
         musicaMenu.play();
+
+        musicaJuego = Gdx.audio.newMusic(Gdx.files.internal("psicopata.mp3"));
+        musicaJuego.setVolume(2.5f);
 
         int totalFramesVideo = 462;
         Array<TextureRegion> framesVideo = new Array<>();
@@ -264,6 +268,10 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         estadoActual = EstadoJuego.JUGANDO;
         yoVoteReiniciar = false;
         votosReinicioActuales = 0;
+
+        if (musicaJuego != null && !musicaJuego.isPlaying()) {
+            musicaJuego.play();
+        }
     }
 
     @Override
@@ -384,6 +392,10 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             if (musicaMenu.isPlaying()){
                 musicaMenu.stop();
             }
+
+            if (!musicaJuego.isPlaying()) {
+                musicaJuego.play();
+            }
         }
 
         if (dibujaBoton("OPCIONES", btnOpciones, Color.DARK_GRAY, Color.WHITE, mouse, click)) {
@@ -503,6 +515,11 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
             if (autoLocal != null) {
                 autoLocal.detener();
             }
+
+            if (musicaJuego.isPlaying()) {
+                musicaJuego.stop();
+            }
+
             yoVoteReiniciar = false;
             votosReinicioActuales = 0;
             if (!musicaMenu.isPlaying()) {
@@ -575,6 +592,9 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         if (pistaPixmap != null) pistaPixmap.dispose();
         if (blancoTexture != null) blancoTexture.dispose();
         if (font != null) font.dispose();
+        if (musicaMenu != null) musicaMenu.dispose();
+        if (musicaJuego != null) musicaJuego.dispose();
+        
         for (Texture t : texturas.values()) {
             t.dispose();
         }
