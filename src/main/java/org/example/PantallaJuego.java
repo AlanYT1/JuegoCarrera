@@ -372,9 +372,9 @@ public class PantallaJuego extends ApplicationAdapter implements NetworkListener
         TextureRegion frameActual = animacionFondo.getKeyFrame(tiempoTranscurrido, true);
         batch.draw(frameActual, 0, 0, 800, 600);
 
-        font.getData().setScale(1.8f);
+        font.getData().setScale(2.3f);
         font.setColor(Color.GOLD);
-        font.draw(batch, "JUEGO DE CARRERAS MULTIJUGADOR", 130, 480);
+        font.draw(batch, "Pimpollo", 333, 480);
         font.getData().setScale(1.0f);
 
         if (dibujaBoton("JUGAR", btnJugar, Color.DARK_GRAY, Color.WHITE, mouse, click)) {
